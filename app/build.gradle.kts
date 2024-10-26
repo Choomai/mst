@@ -11,11 +11,11 @@ android {
     defaultConfig {
         applicationId = "com.baolong.mst"
         minSdk = 24
-        targetSdk = 34
         versionCode = 1
-        versionName = "1.0"
+        versionName = "0.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        targetSdk = 34
     }
 
     buildTypes {
