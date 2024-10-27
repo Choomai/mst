@@ -14,49 +14,67 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.preference.PreferenceManager
+import kotlinx.serialization.json.*
 import com.baolong.mst.ui.theme.MSTTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
 
-        val stuff = mutableListOf(
-            Alarm("WAKE UP BITCH", "12:00 AM", listOf("Sat", "Sun")),
-            Alarm("Okay okay", "1:00 PM", listOf("Mon", "Tue"))
-        )
+        val serializedList = sharedPreferences.getString("alarms", null)
+
+        // Deserialize the serialized list
+        val alarms = Json.decodeFromString<Alarm>(serializedList)
+
         val createdAlarmToast = Toast.makeText(this, "Alarm created!", Toast.LENGTH_SHORT)
 
         setContent {
             MSTTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    LazyColumn(modifier = Modifier.padding(innerPadding)) {
-                        items(stuff) { ListStuff(it) }
-                    }
-                }
-                Box(modifier = Modifier.fillMaxSize()) {
-                    FloatingActionButton(
-                        onClick = {
-                            createdAlarmToast.show()
-                            val newAlarm = Alarm("New Alarm", "12:00 AM", listOf("Mon", "Tue"))
-                            stuff.add(element = newAlarm)
-                        },
-                        modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
+                    remember { alarms }
+                    LazyColumn (
+                        modifier = Modifier.padding(innerPadding)
                     ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.baseline_add_alarm_24),
-                            contentDescription = "Add new alarm"
-                        )
+                        items(alarms, key = { it.label }) { alarm ->
+                            ListAlarm(alarm)
+                        }
+                    }
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        FloatingActionButton(
+                            onClick = {
+                                val length = 10 // Desired length of the string
+                                val charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".toCharArray()
+                                val randomString = (1..length)
+                                    .map { charset.random() }
+                                    .joinToString("")
+                                val newAlarm = Alarm(randomString, "12:00 AM", listOf("Mon", "Tue"))
+                                alarms.add(newAlarm)
+
+                                val editor = sharedPreferences.edit()
+                                val serializedList = Gson().toJson(mutableStateList)
+                                createdAlarmToast.show()
+                            },
+                            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.baseline_add_alarm_24),
+                                contentDescription = "Add new alarm"
+                            )
+                        }
                     }
                 }
             }
@@ -65,7 +83,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun ListStuff(item: Alarm) {
+fun ListAlarm(item: Alarm) {
     Card(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Image(
