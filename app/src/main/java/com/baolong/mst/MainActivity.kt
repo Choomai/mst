@@ -73,16 +73,30 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val testToast = Toast.makeText(this, "This is a short toast.", Toast.LENGTH_SHORT)
+        val testNotes = listOf(
+            Note("sheesh", "ur mom is fat", false),
+            Note("sheesssh", "ur mom is fat", true),
+            Note("sheesssh", "ur mom is fat", false),
+            Note("shessssesh", "ur mom is fat", true)
+        )
+
         setContent {
             MSTTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     LazyColumn (
                         modifier = Modifier.padding(innerPadding)
-                    ) { }
+                    ) {
+                        items(testNotes) { note ->
+                            ListNote(note)
+                        }
+                    }
                     Box(modifier = Modifier.fillMaxSize()) {
                         FloatingActionButton(
-                            onClick = { },
-                            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
+                            onClick = { testToast.show() },
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(16.dp)
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.baseline_add_24),
@@ -92,6 +106,22 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun ListNote(item: Note) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(4.dp, 8.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(item.title)
+            Text(item.content)
+            Text(item.done.toString())
         }
     }
 }
