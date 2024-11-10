@@ -39,7 +39,7 @@ fun randomStr(len: Int): String {
     return (1..len).map{ charset.random() }.joinToString("")
 }
 
-class AlarmViewModel: ViewModel() {
+/*class AlarmViewModel: ViewModel() {
     private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
     private fun loadAlarms() : List<Alarm> {
         val serializedAlarms = sharedPreferences.getString("alarms", null)
@@ -67,41 +67,26 @@ class AlarmViewModel: ViewModel() {
         _alarms.value.remove(alarm)
         saveAlarms(Json.encodeToString(_alarms.value))
     }
-}
+}*/
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-
-
-        val alarms = loadAlarms()
-
-        val createdAlarmToast = Toast.makeText(this, "Alarm created!", Toast.LENGTH_SHORT)
-
-        val viewModel = viewModel<AlarmViewModel>()
         setContent {
             MSTTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     LazyColumn (
                         modifier = Modifier.padding(innerPadding)
-                    ) {
-                        items(viewModel.alarms.value, key = { it.label }) { alarm ->
-                            ListAlarm(alarm, viewModel.alarms.value)
-                        }
-                    }
+                    ) { }
                     Box(modifier = Modifier.fillMaxSize()) {
                         FloatingActionButton(
-                            onClick = {
-                                val newAlarm = Alarm(randomStr(10), "12:00 AM", listOf("Mon", "Tue"))
-                                viewModel.addAlarm(newAlarm)
-                                // No need to manage Toast here
-                            },
+                            onClick = { },
                             modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
                         ) {
                             Icon(
-                                painter = painterResource(id = R.drawable.baseline_add_alarm_24),
-                                contentDescription = "Add new alarm"
+                                painter = painterResource(id = R.drawable.baseline_add_24),
+                                contentDescription = "Add action"
                             )
                         }
                     }
@@ -111,6 +96,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+/*
 @Composable
 fun ListAlarm(item: Alarm, alarms: MutableList<Alarm>) {
     Card(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
@@ -135,4 +121,4 @@ fun ListAlarm(item: Alarm, alarms: MutableList<Alarm>) {
             }
         }
     }
-}
+}*/
