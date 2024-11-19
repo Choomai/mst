@@ -1,37 +1,27 @@
 package com.baolong.mst
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
-import androidx.preference.PreferenceManager
-import kotlinx.serialization.json.Json
 import com.baolong.mst.ui.theme.MSTTheme
 
 fun randomStr(len: Int): String {
@@ -39,73 +29,46 @@ fun randomStr(len: Int): String {
     return (1..len).map{ charset.random() }.joinToString("")
 }
 
-/*class AlarmViewModel: ViewModel() {
-    private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-    private fun loadAlarms() : List<Alarm> {
-        val serializedAlarms = sharedPreferences.getString("alarms", null)
-        // Deserialize the serialized list, allow null
-        return if (serializedAlarms != null) {
-            Json.decodeFromString(serializedAlarms)
-        } else { stateListOf(Alarm("New Alarm", "08:00 AM", listOf("Mon", "Tue"))) }
-    }
-    private fun saveAlarms(serialized: String) {
-        with (sharedPreferences.edit()) {
-            putString("alarms", serialized)
-            apply()
-        }
-    }
-
-    private val _alarms = mutableStateOf(loadAlarms())
-    val alarms: State<MutableList<Alarm>> = _alarms
-
-    fun addAlarm(newAlarm: Alarm) {
-        _alarms.value.add(newAlarm)
-        saveAlarms(Json.encodeToString(_alarms.value))
-    }
-
-    fun removeAlarm(alarm: Alarm) {
-        _alarms.value.remove(alarm)
-        saveAlarms(Json.encodeToString(_alarms.value))
-    }
-}*/
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val testToast = Toast.makeText(this, "This is a short toast.", Toast.LENGTH_SHORT)
-        val testNotes = listOf(
-            Note("sheesh", "ur mom is fat", false),
-            Note("sheesssh", "ur mom is fat", true),
-            Note("sheesssh", "ur mom is fat", false),
-            Note("shessssesh", "ur mom is fat", true)
-        )
-
         setContent {
             MSTTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    LazyColumn (
-                        modifier = Modifier.padding(innerPadding)
-                    ) {
-                        items(testNotes) { note ->
-                            ListNote(note)
-                        }
-                    }
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        FloatingActionButton(
-                            onClick = { testToast.show() },
-                            modifier = Modifier
-                                .align(Alignment.BottomEnd)
-                                .padding(16.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.baseline_add_24),
-                                contentDescription = "Add action"
-                            )
-                        }
-                    }
+//                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+//                     NotesScreen(innerPadding)
+//                }
+                NavigationBar {
+                    
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun NotesScreen() {
+    val testNotes = listOf(
+        Note("note 1", "content", false),
+        Note("note 2", "lorem ipsum", true),
+        Note("note", "lorem ipsum", false),
+        Note("note 22", "lorem ipsum", true)
+    )
+    LazyColumn {
+        items(testNotes) { note ->
+            ListNote(note)
+        }
+    }
+    Box(modifier = Modifier.fillMaxSize()) {
+        FloatingActionButton(
+            onClick = { },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.baseline_add_24),
+                contentDescription = "Add action"
+            )
         }
     }
 }
@@ -116,13 +79,20 @@ fun ListNote(item: Note) {
         modifier = Modifier.fillMaxWidth().padding(4.dp, 8.dp)
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text(item.title)
-            Text(item.content)
-            Text(item.done.toString())
+            Text(text = item.title, style = MaterialTheme.typography.headlineLarge)
+            Text(text = item.content)
+            Text(text = item.done.toString())
         }
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun DefaultPreview() {
+    MSTTheme {
+        NotesScreen()
     }
 }
 
