@@ -34,12 +34,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MSTTheme {
-//                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-//                     NotesScreen(innerPadding)
-//                }
-                NavigationBar {
-                    
-                }
+
             }
         }
     }
@@ -95,30 +90,3 @@ fun DefaultPreview() {
         NotesScreen()
     }
 }
-
-/*
-@Composable
-fun ListAlarm(item: Alarm, alarms: MutableList<Alarm>) {
-    Card(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                painter = painterResource(R.drawable.baseline_alarm_24),
-                contentDescription = "Alarm",
-                modifier = Modifier.width(48.dp).height(48.dp)
-            )
-            Column {
-                Text(text = item.label)
-                Text(text = item.time)
-                Text(text = "Repeat: " + item.days.joinToString(separator = ", "))
-            }
-            Button(
-                onClick = { alarms.remove(item) }
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.baseline_highlight_off_24),
-                    contentDescription = "Delete alarm"
-                )
-            }
-        }
-    }
-}*/
