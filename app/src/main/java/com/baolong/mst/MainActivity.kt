@@ -3,7 +3,9 @@ package com.baolong.mst
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -12,24 +14,30 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -56,25 +64,25 @@ class MainActivity : ComponentActivity() {
             MSTTheme {
                 val navBarItems = listOf(
                     NavItem(
-                        title = "Tasks",
+                        title = "Công việc",
                         route = "tasks",
                         selectedIconId = R.drawable.baseline_task_24,
                         unselectedIconId = R.drawable.outline_task_24
                     ),
                     NavItem(
-                        title = "Notes",
+                        title = "Ghi chú",
                         route = "notes",
                         selectedIconId = R.drawable.baseline_sticky_note_2_24,
                         unselectedIconId = R.drawable.outline_sticky_note_2_24
                     ),
                     NavItem(
-                        title = "Focus",
+                        title = "Tập trung",
                         route = "focus",
                         selectedIconId = R.drawable.baseline_nightlight_24,
                         unselectedIconId = R.drawable.outline_nightlight_24
                     ),
                     NavItem(
-                        title = "Settings",
+                        title = "Cài đặt",
                         route = "settings",
                         selectedIconId = R.drawable.baseline_settings_24,
                         unselectedIconId = R.drawable.outline_settings_24
@@ -131,10 +139,10 @@ class MainActivity : ComponentActivity() {
                         navController = navController,
                         startDestination = navBarItems[0].route
                     ) {
-                        composable(navBarItems[0].route) { NotesScreen() }
-                        composable(navBarItems[1].route) { NotesScreen() }
-                        composable(navBarItems[2].route) { NotesScreen() }
-                        composable(navBarItems[3].route) { NotesScreen() }
+                        composable(navBarItems[0].route) { TasksScreen() }
+                        composable(navBarItems[1].route) { }
+                        composable(navBarItems[2].route) { }
+                        composable(navBarItems[3].route) { }
                     }
                 }
             }
@@ -143,31 +151,47 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun NotesScreen() {
-    val testNotes = remember { mutableStateListOf(
-        Note("note 1", "content", false),
-        Note("note 2", "lorem ipsum", true),
-        Note("note", "lorem ipsum", false),
-        Note("note 22", "lorem ipsum", true)
-    ) }
+fun TasksScreen() {
+    val localContext = LocalContext.current
+    val loadedTasks = TaskManager.loadTasks(context = localContext)
+    val tasks = remember { loadedTasks.toMutableStateList() }
+
     LazyColumn {
-        items(testNotes) { note ->
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(4.dp, 8.dp)
-            ) {
-                Column {
-                    Text(text = note.title, style = MaterialTheme.typography.headlineLarge)
-                    Text(text = note.content)
-                    Text(text = if (note.done) "Task done!" else "Task not completed")
+        items(tasks) { task ->
+            Card(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth().padding(8.dp, 4.dp)
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        val textStyle = if (task.completed) {
+                            TextStyle(
+                                textDecoration = TextDecoration.LineThrough,
+                                color = Color.Gray
+                            )
+                        } else TextStyle.Default
+
+                        Text(
+                            text = task.name,
+                            fontSize = 20.sp,
+                            style = textStyle
+                        )
+                        Text(
+                            text = task.content,
+                            style = textStyle
+                        )
+                        Text(text = if (task.completed) "Task done!" else "Task not completed")
+                    }
+                    Checkbox(
+                        modifier = Modifier.align(Alignment.CenterVertically),
+                        checked = task.completed,
+                        onCheckedChange = { tasks[tasks.indexOf(task)] = task.copy(completed = it) }
+                    )
                 }
             }
         }
     }
+    DisposableEffect(Unit) {
+        onDispose { TaskManager.saveTasks(context = localContext, tasks.toList()) }
+    }
 }
-
-//@Preview(showBackground = true, showSystemUi = true)
-//@Composable
-//fun DefaultPreview() {
-//    MSTTheme {
-//    }
-//}

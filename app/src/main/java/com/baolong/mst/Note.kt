@@ -2,6 +2,5 @@ package com.baolong.mst
 
 data class Note(
     val title: String,
-    val content: String,
-    val done: Boolean
+    val content: String
 )
