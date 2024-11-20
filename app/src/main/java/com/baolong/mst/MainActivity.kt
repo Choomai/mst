@@ -3,7 +3,6 @@ package com.baolong.mst
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,16 +20,19 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.baolong.mst.ui.theme.MSTTheme
 
 fun randomStr(len: Int): String {
@@ -40,8 +42,9 @@ fun randomStr(len: Int): String {
 
 data class NavItem(
     val title: String,
-    val selectedIcon: Painter,
-    val unselectedIcon: Painter,
+    val route: String,
+    val selectedIconId: Int,
+    val unselectedIconId: Int,
     var unread: Boolean = false,
     val badgeCount: Int? = null
 )
@@ -51,37 +54,55 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MSTTheme {
-                val NavBarItems = listOf(
+                val navBarItems = listOf(
                     NavItem(
                         title = "Tasks",
-                        selectedIcon = painterResource(R.drawable.baseline_task_24),
-                        unselectedIcon = painterResource(R.drawable.outline_task_24)
+                        route = "tasks",
+                        selectedIconId = R.drawable.baseline_task_24,
+                        unselectedIconId = R.drawable.outline_task_24
                     ),
                     NavItem(
                         title = "Notes",
-                        selectedIcon = painterResource(R.drawable.baseline_sticky_note_2_24),
-                        unselectedIcon = painterResource(R.drawable.outline_sticky_note_2_24)
+                        route = "notes",
+                        selectedIconId = R.drawable.baseline_sticky_note_2_24,
+                        unselectedIconId = R.drawable.outline_sticky_note_2_24
                     ),
                     NavItem(
                         title = "Focus",
-                        selectedIcon = painterResource(R.drawable.baseline_nightlight_24),
-                        unselectedIcon = painterResource(R.drawable.outline_nightlight_24)
+                        route = "focus",
+                        selectedIconId = R.drawable.baseline_nightlight_24,
+                        unselectedIconId = R.drawable.outline_nightlight_24
+                    ),
+                    NavItem(
+                        title = "Settings",
+                        route = "settings",
+                        selectedIconId = R.drawable.baseline_settings_24,
+                        unselectedIconId = R.drawable.outline_settings_24
                     )
                 )
-                var selectedItemIndex by rememberSaveable {
-                    mutableStateOf(0)
-                }
+                var selectedItemIndex by rememberSaveable { mutableIntStateOf(value = 0) }
+                val navController = rememberNavController()
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
+                    floatingActionButton = {
+                        FloatingActionButton(
+                            onClick = { }
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.baseline_add_24),
+                                contentDescription = "Add action"
+                            )
+                        }
+                    },
                     bottomBar = {
                         NavigationBar {
-                            NavBarItems.forEachIndexed { index, item ->
+                            navBarItems.forEachIndexed { index, item ->
                                 NavigationBarItem(
                                     selected = selectedItemIndex == index,
                                     onClick = {
                                         selectedItemIndex = index
-                                        // navController.navigate(item.route)
+                                        navController.navigate(item.route)
                                     },
                                     label = { Text(text = item.title) },
                                     icon = {
@@ -95,7 +116,7 @@ class MainActivity : ComponentActivity() {
                                             }
                                         ) {
                                             Icon(
-                                                painter = if (index == selectedItemIndex) item.selectedIcon else item.unselectedIcon,
+                                                painter = painterResource(if (index == selectedItemIndex) item.selectedIconId else item.unselectedIconId),
                                                 contentDescription = item.title
                                             )
                                         }
@@ -105,7 +126,16 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) { innerPadding ->
-                    Text(text = "lol", Modifier.padding(innerPadding))
+                    NavHost(
+                        modifier = Modifier.padding(innerPadding),
+                        navController = navController,
+                        startDestination = navBarItems[0].route
+                    ) {
+                        composable(navBarItems[0].route) { NotesScreen() }
+                        composable(navBarItems[1].route) { NotesScreen() }
+                        composable(navBarItems[2].route) { NotesScreen() }
+                        composable(navBarItems[3].route) { NotesScreen() }
+                    }
                 }
             }
         }
@@ -114,51 +144,30 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun NotesScreen() {
-    val testNotes = listOf(
+    val testNotes = remember { mutableStateListOf(
         Note("note 1", "content", false),
         Note("note 2", "lorem ipsum", true),
         Note("note", "lorem ipsum", false),
         Note("note 22", "lorem ipsum", true)
-    )
+    ) }
     LazyColumn {
         items(testNotes) { note ->
-            ListNote(note)
-        }
-    }
-    Box(modifier = Modifier.fillMaxSize()) {
-        FloatingActionButton(
-            onClick = { },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.baseline_add_24),
-                contentDescription = "Add action"
-            )
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(4.dp, 8.dp)
+            ) {
+                Column {
+                    Text(text = note.title, style = MaterialTheme.typography.headlineLarge)
+                    Text(text = note.content)
+                    Text(text = if (note.done) "Task done!" else "Task not completed")
+                }
+            }
         }
     }
 }
 
-@Composable
-fun ListNote(item: Note) {
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(4.dp, 8.dp)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(text = item.title, style = MaterialTheme.typography.headlineLarge)
-            Text(text = item.content)
-            Text(text = item.done.toString())
-        }
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun DefaultPreview() {
-    MSTTheme {
-        NotesScreen()
-    }
-}
+//@Preview(showBackground = true, showSystemUi = true)
+//@Composable
+//fun DefaultPreview() {
+//    MSTTheme {
+//    }
+//}
