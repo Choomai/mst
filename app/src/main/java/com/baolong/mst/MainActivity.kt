@@ -25,7 +25,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
@@ -42,11 +41,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.baolong.mst.ui.theme.MSTTheme
-
-fun randomStr(len: Int): String {
-    val charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".toCharArray()
-    return (1..len).map{ charset.random() }.joinToString("")
-}
 
 data class NavItem(
     val title: String,
@@ -152,9 +146,8 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun TasksScreen() {
-    val localContext = LocalContext.current
-    val loadedTasks = TaskManager.loadTasks(context = localContext)
-    val tasks = remember { loadedTasks.toMutableStateList() }
+    val viewModel = TasksViewModel(LocalContext.current)
+    val tasks = viewModel.loadTasks().toMutableStateList()
 
     LazyColumn {
         items(tasks) { task ->
@@ -185,13 +178,16 @@ fun TasksScreen() {
                     Checkbox(
                         modifier = Modifier.align(Alignment.CenterVertically),
                         checked = task.completed,
-                        onCheckedChange = { tasks[tasks.indexOf(task)] = task.copy(completed = it) }
+                        onCheckedChange = {
+                            tasks[tasks.indexOf(task)] = task.copy(completed = it)
+                            viewModel.saveTasks(tasks.toList())
+                        }
                     )
                 }
             }
         }
     }
     DisposableEffect(Unit) {
-        onDispose { TaskManager.saveTasks(context = localContext, tasks.toList()) }
+        onDispose { viewModel.saveTasks(tasks.toList()) }
     }
 }
