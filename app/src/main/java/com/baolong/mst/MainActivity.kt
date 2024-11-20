@@ -42,14 +42,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.baolong.mst.ui.theme.MSTTheme
 
-data class NavItem(
-    val title: String,
-    val route: String,
-    val selectedIconId: Int,
-    val unselectedIconId: Int,
-    var unread: Boolean = false,
-    val badgeCount: Int? = null
-)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
