@@ -140,11 +140,11 @@ class MainActivity : ComponentActivity() {
                     ) {
                         composable(navBarItems[0].route) {
                             TasksScreen(tasksViewModel, tasks)
-                            if (openDialog.value) { CreateDialog(navBarItems[0].route, tasks, null, state = openDialog) }
+                            if (openDialog.value) { CreateDialog(navBarItems[0].route, tasks = tasks, state = openDialog) }
                         }
                         composable(navBarItems[1].route) {
                             NotesScreen(notesViewModel, notes)
-                            if (openDialog.value) { CreateDialog(navBarItems[1].route, null, notes, state = openDialog) }
+                            if (openDialog.value) { CreateDialog(navBarItems[1].route, notes = notes, state = openDialog) }
                         }
                         composable(navBarItems[2].route) { }
                         composable(navBarItems[3].route) { }
@@ -241,7 +241,12 @@ fun NotesScreen(viewModel: NotesViewModel, notes: SnapshotStateList<Note>) {
 }
 
 @Composable
-fun CreateDialog(routeName: String, tasks: SnapshotStateList<Task>?, notes: SnapshotStateList<Note>?, state: MutableState<Boolean>) {
+fun CreateDialog(
+    routeName: String,
+    tasks: SnapshotStateList<Task>? = null,
+    notes: SnapshotStateList<Note>? = null,
+    state: MutableState<Boolean>
+) {
     var inputTitle by remember { mutableStateOf("") }
     var inputTitleValid by remember { mutableStateOf(false) }
     var inputContent by remember { mutableStateOf("") }
