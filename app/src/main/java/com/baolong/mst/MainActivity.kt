@@ -1,15 +1,15 @@
 package com.baolong.mst
 
-import android.app.AlertDialog
-import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -90,13 +91,11 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
 
                 val openDialog = remember { mutableStateOf(false) }
-                var inputTitle by remember { mutableStateOf("") }
-                var inputTitleValid by remember { mutableStateOf(false) }
-                var inputContent by remember { mutableStateOf("") }
-                var inputContentValid by remember { mutableStateOf(false) }
 
                 val tasksViewModel = TasksViewModel(LocalContext.current)
                 val tasks = tasksViewModel.loadTasks().toMutableStateList()
+                val notesViewModel = NotesViewModel(LocalContext.current)
+                val notes = notesViewModel.loadNotes().toMutableStateList()
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
@@ -141,9 +140,12 @@ class MainActivity : ComponentActivity() {
                     ) {
                         composable(navBarItems[0].route) {
                             TasksScreen(tasksViewModel, tasks)
-                            if (openDialog.value) { CreateDialog(navBarItems[0].route, openDialog) }
+                            if (openDialog.value) { CreateDialog(navBarItems[0].route, tasks, null, state = openDialog) }
                         }
-                        composable(navBarItems[1].route) { }
+                        composable(navBarItems[1].route) {
+                            NotesScreen(notesViewModel, notes)
+                            if (openDialog.value) { CreateDialog(navBarItems[1].route, null, notes, state = openDialog) }
+                        }
                         composable(navBarItems[2].route) { }
                         composable(navBarItems[3].route) { }
                     }
@@ -206,89 +208,127 @@ fun TasksScreen(viewModel: TasksViewModel, tasks: SnapshotStateList<Task>) {
 }
 
 @Composable
-fun NotesScreen(viewModel: NotesViewModel, notes: SnapshotStateList<Task>) {
+fun NotesScreen(viewModel: NotesViewModel, notes: SnapshotStateList<Note>) {
     LazyColumn {
-        items(tasks) { task ->
+        items(notes) { note ->
             Card(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier.fillMaxWidth().padding(8.dp, 4.dp)
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        val textStyle = if (task.completed) {
-                            TextStyle(
-                                textDecoration = TextDecoration.LineThrough,
-                                color = Color.Gray
-                            )
-                        } else TextStyle.Default
-
                         Text(
-                            text = task.name,
+                            text = note.title,
                             fontSize = 20.sp,
-                            style = textStyle
                         )
-                        Text(
-                            text = task.content,
-                            style = textStyle
-                        )
-                        Text(text = if (task.completed) "Đã hoàn thành nhiệm vụ!" else "Nhiệm vụ chưa hoàn thành")
+                        Text(text = note.content)
                     }
                     Row(modifier = Modifier.align(Alignment.CenterVertically)) {
                         IconButton(
                             onClick = {
-                                tasks.remove(task)
-                                viewModel.saveTasks(tasks.toList())
+                                notes.remove(note)
+                                viewModel.saveNotes(notes.toList())
                             }
                         ) { Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete") }
-                        Checkbox(
-                            checked = task.completed,
-                            onCheckedChange = {
-                                tasks[tasks.indexOf(task)] = task.copy(completed = it)
-                                viewModel.saveTasks(tasks.toList())
-                            }
-                        )
                     }
                 }
             }
         }
     }
     DisposableEffect(Unit) {
-        onDispose { viewModel.saveTasks(tasks.toList()) }
+        onDispose { viewModel.saveNotes(notes.toList()) }
     }
 }
 
 @Composable
-fun CreateDialog(routeName: String, state: MutableState<Boolean>) {
+fun CreateDialog(routeName: String, tasks: SnapshotStateList<Task>?, notes: SnapshotStateList<Note>?, state: MutableState<Boolean>) {
+    var inputTitle by remember { mutableStateOf("") }
+    var inputTitleValid by remember { mutableStateOf(false) }
+    var inputContent by remember { mutableStateOf("") }
+    var inputContentValid by remember { mutableStateOf(false) }
+
+
+    fun resetInput() {
+        inputTitle = ""
+        inputTitleValid = false
+        inputContent = ""
+        inputContentValid = false
+    }
+
+    @Composable
+    fun DismissButton() {
+        Button(onClick = {
+            resetInput()
+            state.value = false
+        }) { Text(text = "Hủy bỏ") }
+    }
+
     when (routeName) {
         "tasks" -> AlertDialog(
             title = { Text(text = "Nhiệm vụ mới") },
             text = {
                 Column {
-                    Text(text = "Test")
+                    OutlinedTextField(
+                        value = inputTitle,
+                        onValueChange = {
+                            inputTitle = it
+                            inputTitleValid = it.isNotEmpty()
+                        },
+                        label = { Text(text = "Nhiệm vụ") }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = inputContent,
+                        onValueChange = {
+                            inputContent = it
+                            inputContentValid = it.isNotEmpty()
+                        },
+                        label = { Text(text = "Nội dung") }
+                    )
                 }
             },
             confirmButton = {
-                Button(onClick = { state.value = false }) { Text(text = "Thêm vào") }
+                Button(onClick = {
+                    tasks?.add(Task(inputTitle, inputContent))
+                    resetInput()
+                    state.value = false
+                }) { Text(text = "Thêm vào") }
             },
-            dismissButton = {
-                Button(onClick = { state.value = false }) { Text(text = "Hủy bỏ") }
-            },
-            onDismissRequest = { state.value = false },
+            dismissButton = { DismissButton() },
+            onDismissRequest = { resetInput() },
         )
         "notes" -> AlertDialog(
             title = { Text(text = "Ghi chú mới") },
             text = {
                 Column {
-                    Text(text = "Test")
+                    OutlinedTextField(
+                        value = inputTitle,
+                        onValueChange = {
+                            inputTitle = it
+                            inputTitleValid = it.isNotEmpty()
+                        },
+                        label = { Text(text = "Tiêu đề") }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = inputContent,
+                        onValueChange = {
+                            inputContent = it
+                            inputContentValid = it.isNotEmpty()
+                        },
+                        label = { Text(text = "Nội dung") }
+                    )
                 }
             },
             confirmButton = {
-                Button(onClick = { state.value = false }) { Text(text = "Thêm vào") }
+                Button(onClick = {
+                    notes?.add(Note(inputTitle, inputContent))
+                    resetInput()
+                    state.value = false
+                }) { Text(text = "Thêm vào") }
             },
-            dismissButton = {
-                Button(onClick = { state.value = false }) { Text(text = "Hủy bỏ") }
-            },
-            onDismissRequest = { state.value = false },
+            dismissButton = { DismissButton() },
+            onDismissRequest = { resetInput() },
         )
     }
 }

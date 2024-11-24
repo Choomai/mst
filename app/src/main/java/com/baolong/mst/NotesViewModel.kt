@@ -5,24 +5,24 @@ import com.google.gson.Gson
 
 class NotesViewModel(private val context: Context) {
     companion object {
-        private const val PREF_KEY_TASKS = "tasks"
+        private const val PREF_KEY_TASKS = "notes"
     }
 
-    fun saveTasks(tasks: List<Task>) {
-        val sharedPref = context.getSharedPreferences("tasks_pref", Context.MODE_PRIVATE)
+    fun saveNotes(notes: List<Note>) {
+        val sharedPref = context.getSharedPreferences("notes_pref", Context.MODE_PRIVATE)
         with(sharedPref.edit()) {
-            putString(Companion.PREF_KEY_TASKS, Gson().toJson(tasks))
+            putString(Companion.PREF_KEY_TASKS, Gson().toJson(notes))
             apply()
         }
     }
 
-    fun loadTasks(): List<Task> {
-        val sharedPref = context.getSharedPreferences("tasks_pref", Context.MODE_PRIVATE)
-        val tasksJson = sharedPref.getString(Companion.PREF_KEY_TASKS, "") ?: ""
+    fun loadNotes(): List<Note> {
+        val sharedPref = context.getSharedPreferences("notes_pref", Context.MODE_PRIVATE)
+        val notesJson = sharedPref.getString(Companion.PREF_KEY_TASKS, "") ?: ""
         return try {
-            Gson().fromJson(tasksJson, Array<Task>::class.java).toList()
+            Gson().fromJson(notesJson, Array<Note>::class.java).toList()
         } catch (exception: Exception) {
-            listOf(Task("Hoàn thành bài tập", "Môn Toán", false))
+            listOf(Note("Công thức diện tích hình vuông", "a^2"))
         }
     }
 }
