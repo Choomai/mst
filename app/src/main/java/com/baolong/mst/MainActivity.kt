@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -146,8 +147,8 @@ class MainActivity : ComponentActivity() {
                             NotesScreen(notesViewModel, notes)
                             if (openDialog.value) { CreateDialog(navBarItems[1].route, notes = notes, state = openDialog) }
                         }
-                        composable(navBarItems[2].route) { }
-                        composable(navBarItems[3].route) { }
+                        composable(navBarItems[2].route) { FocusScreen() }
+                        composable(navBarItems[3].route) { SettingsScreen() }
                     }
                 }
             }
@@ -241,6 +242,26 @@ fun NotesScreen(viewModel: NotesViewModel, notes: SnapshotStateList<Note>) {
 }
 
 @Composable
+fun FocusScreen() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("In development!.")
+    }
+}
+
+@Composable
+fun SettingsScreen() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("In development!.")
+    }
+}
+
+@Composable
 fun CreateDialog(
     routeName: String,
     tasks: SnapshotStateList<Task>? = null,
@@ -293,11 +314,14 @@ fun CreateDialog(
                 }
             },
             confirmButton = {
-                Button(onClick = {
-                    tasks?.add(Task(inputTitle, inputContent))
-                    resetInput()
-                    state.value = false
-                }) { Text(text = "Thêm vào") }
+                Button(
+                    onClick = {
+                        tasks?.add(Task(inputTitle, inputContent))
+                        resetInput()
+                        state.value = false
+                    },
+                    enabled = inputTitleValid && inputContentValid
+                ) { Text(text = "Thêm vào") }
             },
             dismissButton = { DismissButton() },
             onDismissRequest = { resetInput() },
@@ -326,11 +350,14 @@ fun CreateDialog(
                 }
             },
             confirmButton = {
-                Button(onClick = {
-                    notes?.add(Note(inputTitle, inputContent))
-                    resetInput()
-                    state.value = false
-                }) { Text(text = "Thêm vào") }
+                Button(
+                    onClick = {
+                        notes?.add(Note(inputTitle, inputContent))
+                        resetInput()
+                        state.value = false
+                    },
+                    enabled = inputTitleValid && inputContentValid
+                ) { Text(text = "Thêm vào") }
             },
             dismissButton = { DismissButton() },
             onDismissRequest = { resetInput() },
