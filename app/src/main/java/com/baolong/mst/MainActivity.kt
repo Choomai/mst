@@ -76,10 +76,10 @@ class MainActivity : ComponentActivity() {
                         unselectedIconId = R.drawable.outline_sticky_note_2_24
                     ),
                     NavItem(
-                        title = "Tập trung",
-                        route = "focus",
-                        selectedIconId = R.drawable.baseline_nightlight_24,
-                        unselectedIconId = R.drawable.outline_nightlight_24
+                        title = "Thời gian biểu",
+                        route = "timetable",
+                        selectedIconId = R.drawable.baseline_today_24,
+                        unselectedIconId = R.drawable.outline_today_24
                     ),
                     NavItem(
                         title = "Cài đặt",
@@ -147,7 +147,7 @@ class MainActivity : ComponentActivity() {
                             NotesScreen(notesViewModel, notes)
                             if (openDialog.value) { CreateDialog(navBarItems[1].route, notes = notes, state = openDialog) }
                         }
-                        composable(navBarItems[2].route) { FocusScreen() }
+                        composable(navBarItems[2].route) { TimetableScreen() }
                         composable(navBarItems[3].route) { SettingsScreen() }
                     }
                 }
@@ -242,7 +242,7 @@ fun NotesScreen(viewModel: NotesViewModel, notes: SnapshotStateList<Note>) {
 }
 
 @Composable
-fun FocusScreen() {
+fun TimetableScreen() {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
