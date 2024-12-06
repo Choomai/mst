@@ -13,7 +13,7 @@ android {
         applicationId = "com.baolong.mst"
         minSdk = 26
         versionCode = 1
-        versionName = "0.0.1"
+        versionName = "0.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         targetSdk = 34
@@ -53,6 +53,8 @@ dependencies {
     implementation(libs.androidx.preference.ktx)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.gson)
+    implementation(libs.androidx.room.common)
+    implementation(libs.androidx.room.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
