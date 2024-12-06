@@ -1,5 +1,9 @@
 package com.baolong.mst
 
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -59,39 +63,44 @@ import com.baolong.mst.ui.theme.MSTTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val navBarItems = listOf(
+            NavItem(
+                title = "Nhiệm vụ",
+                route = "tasks",
+                selectedIconId = R.drawable.baseline_task_24,
+                unselectedIconId = R.drawable.outline_task_24
+            ),
+            NavItem(
+                title = "Ghi chú",
+                route = "notes",
+                selectedIconId = R.drawable.baseline_sticky_note_2_24,
+                unselectedIconId = R.drawable.outline_sticky_note_2_24
+            ),
+            NavItem(
+                title = "Thời gian biểu",
+                route = "timetable",
+                selectedIconId = R.drawable.baseline_today_24,
+                unselectedIconId = R.drawable.outline_today_24
+            ),
+            NavItem(
+                title = "Cài đặt",
+                route = "settings",
+                selectedIconId = R.drawable.baseline_settings_24,
+                unselectedIconId = R.drawable.outline_settings_24
+            )
+        )
+
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(this, NotificationReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
 
         setContent {
             MSTTheme {
-                val navBarItems = listOf(
-                    NavItem(
-                        title = "Nhiệm vụ",
-                        route = "tasks",
-                        selectedIconId = R.drawable.baseline_task_24,
-                        unselectedIconId = R.drawable.outline_task_24
-                    ),
-                    NavItem(
-                        title = "Ghi chú",
-                        route = "notes",
-                        selectedIconId = R.drawable.baseline_sticky_note_2_24,
-                        unselectedIconId = R.drawable.outline_sticky_note_2_24
-                    ),
-                    NavItem(
-                        title = "Thời gian biểu",
-                        route = "timetable",
-                        selectedIconId = R.drawable.baseline_today_24,
-                        unselectedIconId = R.drawable.outline_today_24
-                    ),
-                    NavItem(
-                        title = "Cài đặt",
-                        route = "settings",
-                        selectedIconId = R.drawable.baseline_settings_24,
-                        unselectedIconId = R.drawable.outline_settings_24
-                    )
-                )
                 var selectedItemIndex by rememberSaveable { mutableIntStateOf(value = 0) }
                 val navController = rememberNavController()
 
-                val openDialog = remember { mutableStateOf(false) }
+                val openBasicDialog = remember { mutableStateOf(false) }
+                val openTimetableDialog = remember { mutableStateOf(false) }
 
                 val tasksViewModel = TasksViewModel(LocalContext.current)
                 val tasks = tasksViewModel.loadTasks().toMutableStateList()
@@ -102,7 +111,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     floatingActionButton = {
                         FloatingActionButton(
-                            onClick = { openDialog.value = true }
+                            onClick = { openBasicDialog.value = true }
                         ) { Icon(imageVector = Icons.Default.Add, contentDescription = "Add action") }
                     },
                     bottomBar = {
@@ -141,13 +150,16 @@ class MainActivity : ComponentActivity() {
                     ) {
                         composable(navBarItems[0].route) {
                             TasksScreen(tasksViewModel, tasks)
-                            if (openDialog.value) { CreateDialog(navBarItems[0].route, tasks = tasks, state = openDialog) }
+                            if (openBasicDialog.value) { CreateBasicDialog(navBarItems[0].route, tasks = tasks, state = openBasicDialog) }
                         }
                         composable(navBarItems[1].route) {
                             NotesScreen(notesViewModel, notes)
-                            if (openDialog.value) { CreateDialog(navBarItems[1].route, notes = notes, state = openDialog) }
+                            if (openBasicDialog.value) { CreateBasicDialog(navBarItems[1].route, notes = notes, state = openBasicDialog) }
                         }
-                        composable(navBarItems[2].route) { TimetableScreen() }
+                        composable(navBarItems[2].route) {
+                            TimetableScreen()
+                            if (openTimetableDialog.value) { CreateTimetableDialog(state = openTimetableDialog) }
+                        }
                         composable(navBarItems[3].route) { SettingsScreen() }
                     }
                 }
@@ -262,7 +274,7 @@ fun SettingsScreen() {
 }
 
 @Composable
-fun CreateDialog(
+fun CreateBasicDialog(
     routeName: String,
     tasks: SnapshotStateList<Task>? = null,
     notes: SnapshotStateList<Note>? = null,
@@ -272,7 +284,6 @@ fun CreateDialog(
     var inputTitleValid by remember { mutableStateOf(false) }
     var inputContent by remember { mutableStateOf("") }
     var inputContentValid by remember { mutableStateOf(false) }
-
 
     fun resetInput() {
         inputTitle = ""
@@ -363,4 +374,42 @@ fun CreateDialog(
             onDismissRequest = { resetInput() },
         )
     }
+}
+
+@Composable
+fun CreateTimetableDialog(state: MutableState<Boolean>) {
+    var inputTitle by remember { mutableStateOf("") }
+    var inputTitleValid by remember { mutableStateOf(false) }
+    var inputContent by remember { mutableStateOf("") }
+    var inputContentValid by remember { mutableStateOf(false) }
+
+    fun resetInput() {
+        inputTitle = ""
+        inputTitleValid = false
+        inputContent = ""
+        inputContentValid = false
+    }
+
+    AlertDialog(
+        title = { Text("Thêm lịch trình") },
+        text = {
+            Column() {
+                // TODO: Add time and weekday input
+            }
+        },
+        confirmButton = {
+            Button(onClick = {
+                // TODO: handle and register with AlarmManager
+                resetInput()
+                state.value = false
+            }) { Text("Thêm vào") }
+        },
+        dismissButton = {
+            Button(onClick = {
+                resetInput()
+                state.value = false
+            }) { Text("Hủy bỏ") }
+        },
+        onDismissRequest = { resetInput() }
+    )
 }
