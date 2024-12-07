@@ -8,7 +8,7 @@ import java.time.LocalTime
 @Entity(tableName = "timetable_events")
 data class TimetableEvent(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    @ColumnInfo(name = "content") val content: String,
-    @ColumnInfo(name = "weekday") val weekday: Int,
-    @ColumnInfo(name = "time") val time: LocalTime
+    val content: String,
+    val weekday: Int,
+    val time: LocalTime
 )
