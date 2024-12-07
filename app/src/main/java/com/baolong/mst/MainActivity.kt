@@ -36,7 +36,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -44,12 +43,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
@@ -102,10 +99,7 @@ class MainActivity : ComponentActivity() {
                 val openBasicDialog = remember { mutableStateOf(false) }
                 val openTimetableDialog = remember { mutableStateOf(false) }
 
-                val tasksViewModel = TasksViewModel(LocalContext.current)
-                val tasks = tasksViewModel.loadTasks().toMutableStateList()
-                val notesViewModel = NotesViewModel(LocalContext.current)
-                val notes = notesViewModel.loadNotes().toMutableStateList()
+                val database = AppDatabase.getInstance(this)
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
@@ -149,15 +143,15 @@ class MainActivity : ComponentActivity() {
                         startDestination = navBarItems[0].route
                     ) {
                         composable(navBarItems[0].route) {
-                            TasksScreen(tasksViewModel, tasks)
-                            if (openBasicDialog.value) { CreateBasicDialog(navBarItems[0].route, tasks = tasks, state = openBasicDialog) }
+                            TasksScreen(database)
+                            if (openBasicDialog.value) { CreateBasicDialog(navBarItems[0].route, database = database, state = openBasicDialog) }
                         }
                         composable(navBarItems[1].route) {
-                            NotesScreen(notesViewModel, notes)
-                            if (openBasicDialog.value) { CreateBasicDialog(navBarItems[1].route, notes = notes, state = openBasicDialog) }
+                            NotesScreen(database)
+                            if (openBasicDialog.value) { CreateBasicDialog(navBarItems[1].route, database = database, state = openBasicDialog) }
                         }
                         composable(navBarItems[2].route) {
-                            TimetableScreen()
+                            TimetableScreen(database)
                             if (openTimetableDialog.value) { CreateTimetableDialog(state = openTimetableDialog) }
                         }
                         composable(navBarItems[3].route) { SettingsScreen() }
@@ -169,7 +163,9 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun TasksScreen(viewModel: TasksViewModel, tasks: SnapshotStateList<Task>) {
+fun TasksScreen(database: AppDatabase) {
+    val taskDao = database.taskDao()
+    val tasks = taskDao.getAllTasks().toMutableStateList()
     LazyColumn {
         items(tasks) { task ->
             Card(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
@@ -200,14 +196,14 @@ fun TasksScreen(viewModel: TasksViewModel, tasks: SnapshotStateList<Task>) {
                         IconButton(
                             onClick = {
                                 tasks.remove(task)
-                                viewModel.saveTasks(tasks.toList())
+                                taskDao.deleteTask(task)
                             }
                         ) { Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete") }
                         Checkbox(
                             checked = task.completed,
                             onCheckedChange = {
                                 tasks[tasks.indexOf(task)] = task.copy(completed = it)
-                                viewModel.saveTasks(tasks.toList())
+                                taskDao.updateTask(task)
                             }
                         )
                     }
@@ -215,13 +211,12 @@ fun TasksScreen(viewModel: TasksViewModel, tasks: SnapshotStateList<Task>) {
             }
         }
     }
-    DisposableEffect(Unit) {
-        onDispose { viewModel.saveTasks(tasks.toList()) }
-    }
 }
 
 @Composable
-fun NotesScreen(viewModel: NotesViewModel, notes: SnapshotStateList<Note>) {
+fun NotesScreen(database: AppDatabase) {
+    val noteDao = database.noteDao()
+    val notes = noteDao.getAllNotes().toMutableStateList()
     LazyColumn {
         items(notes) { note ->
             Card(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
@@ -240,7 +235,7 @@ fun NotesScreen(viewModel: NotesViewModel, notes: SnapshotStateList<Note>) {
                         IconButton(
                             onClick = {
                                 notes.remove(note)
-                                viewModel.saveNotes(notes.toList())
+                                noteDao.deleteNote(note)
                             }
                         ) { Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete") }
                     }
@@ -248,13 +243,10 @@ fun NotesScreen(viewModel: NotesViewModel, notes: SnapshotStateList<Note>) {
             }
         }
     }
-    DisposableEffect(Unit) {
-        onDispose { viewModel.saveNotes(notes.toList()) }
-    }
 }
 
 @Composable
-fun TimetableScreen() {
+fun TimetableScreen(database: AppDatabase) {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -276,14 +268,15 @@ fun SettingsScreen() {
 @Composable
 fun CreateBasicDialog(
     routeName: String,
-    tasks: SnapshotStateList<Task>? = null,
-    notes: SnapshotStateList<Note>? = null,
+    database: AppDatabase,
     state: MutableState<Boolean>
 ) {
     var inputTitle by remember { mutableStateOf("") }
     var inputTitleValid by remember { mutableStateOf(false) }
     var inputContent by remember { mutableStateOf("") }
     var inputContentValid by remember { mutableStateOf(false) }
+    val noteDao = database.noteDao()
+    val taskDao = database.taskDao()
 
     fun resetInput() {
         inputTitle = ""
@@ -327,7 +320,7 @@ fun CreateBasicDialog(
             confirmButton = {
                 Button(
                     onClick = {
-                        tasks?.add(Task(inputTitle, inputContent))
+                        taskDao.insertTask(Task(name = inputTitle, content = inputContent))
                         resetInput()
                         state.value = false
                     },
@@ -363,7 +356,7 @@ fun CreateBasicDialog(
             confirmButton = {
                 Button(
                     onClick = {
-                        notes?.add(Note(inputTitle, inputContent))
+                        noteDao.insertNote(Note(title = inputTitle, content = inputContent))
                         resetInput()
                         state.value = false
                     },
@@ -393,7 +386,7 @@ fun CreateTimetableDialog(state: MutableState<Boolean>) {
     AlertDialog(
         title = { Text("Thêm lịch trình") },
         text = {
-            Column() {
+            Column {
                 // TODO: Add time and weekday input
             }
         },
