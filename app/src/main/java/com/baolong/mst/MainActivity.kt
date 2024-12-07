@@ -94,7 +94,7 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
 
                 val openBasicDialog = remember { mutableStateOf(false) }
-                val openTimetableDialog = remember { mutableStateOf(false) }
+//                val openTimetableDialog = remember { mutableStateOf(false) }
 
                 val database = AppDatabase.getInstance(LocalContext.current)
 
