@@ -1,6 +1,9 @@
 package com.baolong.mst
 
+import android.R.attr.password
+import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
@@ -13,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -33,6 +35,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -43,16 +46,23 @@ import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat.startActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.baolong.mst.ui.theme.MSTTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -88,6 +98,15 @@ class MainActivity : ComponentActivity() {
 //        val intent = Intent(this, NotificationReceiver::class.java)
 //        val pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
 
+        lifecycleScope.launch {
+            val context = this@MainActivity
+            val database = AppDatabase.getInstance(context)
+            val notes = withContext(Dispatchers.IO) {
+                database.noteDao().getAllNotes()
+            }
+
+        }
+
         setContent {
             MSTTheme {
                 var selectedItemIndex by rememberSaveable { mutableIntStateOf(value = 0) }
@@ -96,7 +115,7 @@ class MainActivity : ComponentActivity() {
                 val openBasicDialog = remember { mutableStateOf(false) }
 //                val openTimetableDialog = remember { mutableStateOf(false) }
 
-                val database = AppDatabase.getInstance(LocalContext.current)
+                val tasksViewModel = TasksViewModel(this)
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
@@ -140,11 +159,11 @@ class MainActivity : ComponentActivity() {
                         startDestination = navBarItems[0].route
                     ) {
                         composable(navBarItems[0].route) {
-                            TasksScreen(database)
+                            TasksScreen(executorService)
                             if (openBasicDialog.value) { CreateBasicDialog(navBarItems[0].route, database = database, state = openBasicDialog) }
                         }
                         composable(navBarItems[1].route) {
-                            NotesScreen(database)
+                            NotesScreen(executorService)
                             if (openBasicDialog.value) { CreateBasicDialog(navBarItems[1].route, database = database, state = openBasicDialog) }
                         }
                         composable(navBarItems[2].route) {
@@ -160,66 +179,75 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun TasksScreen(database: AppDatabase) {
-    val taskDao = database.taskDao()
-    val tasks = taskDao.getAllTasks().toMutableStateList()
+fun TasksScreen(viewModel: TasksViewModel) {
+    val tasks = viewModel.tasks.collectAsState(listOf())
     LazyColumn {
-        items(tasks) { task ->
-            Card(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth().padding(8.dp, 4.dp)
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        val textStyle = if (task.completed) {
-                            TextStyle(
-                                textDecoration = TextDecoration.LineThrough,
-                                color = Color.Gray
-                            )
-                        } else TextStyle.Default
+        tasks.value.forEach { task ->
+            TaskItem(
+                task = task,
+                onUpdate = { viewModel.updateTask(task) },
+                onDelete = { viewModel.deleteTask(task) }
+            )
+        }
+    }
+}
 
-                        Text(
-                            text = task.name,
-                            fontSize = 20.sp,
-                            style = textStyle
-                        )
-                        Text(
-                            text = task.content,
-                            style = textStyle
-                        )
-                        Text(text = if (task.completed) "Đã hoàn thành nhiệm vụ!" else "Nhiệm vụ chưa hoàn thành")
-                    }
-                    Row(modifier = Modifier.align(Alignment.CenterVertically)) {
-                        IconButton(
-                            onClick = {
-                                tasks.remove(task)
-                                taskDao.deleteTask(task)
-                            }
-                        ) { Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete") }
-                        Checkbox(
-                            checked = task.completed,
-                            onCheckedChange = {
-                                tasks[tasks.indexOf(task)] = task.copy(completed = it)
-                                taskDao.updateTask(task)
-                            }
-                        )
-                    }
-                }
+@Composable
+fun TaskItem(task: Task, onUpdate: (Boolean) -> Unit, onDelete: () -> Unit) {
+    Card(modifier = Modifier
+        .fillMaxWidth()
+        .padding(8.dp)) {
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp, 4.dp)
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                val textStyle = if (task.completed) {
+                    TextStyle(
+                        textDecoration = TextDecoration.LineThrough,
+                        color = Color.Gray
+                    )
+                } else TextStyle.Default
+
+                Text(
+                    text = task.name,
+                    fontSize = 20.sp,
+                    style = textStyle
+                )
+                Text(
+                    text = task.content,
+                    style = textStyle
+                )
+                Text(text = if (task.completed) "Đã hoàn thành nhiệm vụ!" else "Nhiệm vụ chưa hoàn thành")
+            }
+            Row(modifier = Modifier.align(Alignment.CenterVertically)) {
+                IconButton(
+                    onClick = onDelete
+                ) { Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete") }
+                Checkbox(
+                    checked = task.completed,
+                    onCheckedChange = onUpdate
+                )
             }
         }
     }
 }
 
 @Composable
-fun NotesScreen(database: AppDatabase) {
-    val noteDao = database.noteDao()
+fun NotesScreen(executorService: ExecutorService) {
     val notes = noteDao.getAllNotes().toMutableStateList()
     LazyColumn {
         items(notes) { note ->
-            Card(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+            Card(modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)) {
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth().padding(8.dp, 4.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp, 4.dp)
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
@@ -232,7 +260,6 @@ fun NotesScreen(database: AppDatabase) {
                         IconButton(
                             onClick = {
                                 notes.remove(note)
-                                noteDao.deleteNote(note)
                             }
                         ) { Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete") }
                     }

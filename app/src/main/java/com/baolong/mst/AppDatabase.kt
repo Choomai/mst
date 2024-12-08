@@ -10,6 +10,7 @@ import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
 
 @Database(entities = [TimetableEvent::class, Note::class, Task::class], version = 1, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
@@ -39,7 +40,7 @@ abstract class AppDatabase : RoomDatabase() {
 @Dao
 interface TimetableDao {
     @Query("SELECT * FROM timetable_events")
-    fun getAllEvents(): List<TimetableEvent>
+    fun getAllEvents(): Flow<List<TimetableEvent>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertEvent(event: TimetableEvent)
@@ -54,7 +55,7 @@ interface TimetableDao {
 @Dao
 interface NoteDao {
     @Query("SELECT * FROM notes")
-    fun getAllNotes(): List<Note>
+    fun getAllNotes(): Flow<List<Note>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertNote(note: Note)
@@ -69,7 +70,7 @@ interface NoteDao {
 @Dao
 interface TaskDao {
     @Query("SELECT * FROM tasks")
-    fun getAllTasks(): List<Task>
+    fun getAllTasks(): Flow<List<Task>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertTask(task: Task)
