@@ -10,7 +10,9 @@ import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Update
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 
 @Database(entities = [TimetableEvent::class, Note::class, Task::class], version = 1, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
@@ -40,44 +42,44 @@ abstract class AppDatabase : RoomDatabase() {
 @Dao
 interface TimetableDao {
     @Query("SELECT * FROM timetable_events")
-    fun getAllEvents(): Flow<List<TimetableEvent>>
+    suspend fun getAllEvents(): List<TimetableEvent>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertEvent(event: TimetableEvent)
+    suspend fun insertEvent(event: TimetableEvent)
 
     @Update
-    fun updateEvent(vararg event: TimetableEvent)
+    suspend fun updateEvent(vararg event: TimetableEvent)
 
     @Delete
-    fun deleteEvent(event: TimetableEvent)
+    suspend fun deleteEvent(event: TimetableEvent)
 }
 
 @Dao
 interface NoteDao {
     @Query("SELECT * FROM notes")
-    fun getAllNotes(): Flow<List<Note>>
+    suspend fun getAllNotes(): List<Note>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertNote(note: Note)
+    suspend fun insertNote(note: Note)
 
     @Update
-    fun updateNote(vararg note: Note)
+    suspend fun updateNote(vararg note: Note)
 
     @Delete
-    fun deleteNote(note: Note)
+    suspend fun deleteNote(note: Note)
 }
 
 @Dao
 interface TaskDao {
     @Query("SELECT * FROM tasks")
-    fun getAllTasks(): Flow<List<Task>>
+    suspend fun getAllTasks(): List<Task>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertTask(task: Task)
+    suspend fun insertTask(task: Task)
 
     @Update
-    fun updateTask(vararg task: Task)
+    suspend fun updateTask(vararg task: Task)
 
     @Delete
-    fun deleteTask(task: Task)
+    suspend fun deleteTask(task: Task)
 }

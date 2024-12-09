@@ -1,24 +1,39 @@
 package com.baolong.mst
 
-import android.content.Context
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class TasksViewModel(context: Context): ViewModel() {
-    private val taskDao = AppDatabase.getInstance(context).taskDao()
-    val tasks = taskDao.getAllTasks()
+class TasksViewModel(database: AppDatabase): ViewModel() {
+    val tasks = mutableStateOf<List<Task>>(emptyList())
+    private val taskDao = database.taskDao()
 
-    fun insertTask(task: Task) = viewModelScope.launch {
-        taskDao.insertTask(task)
+    init {
+        viewModelScope.launch(Dispatchers.IO) {
+            this@TasksViewModel.tasks.value = taskDao.getAllTasks()
+        }
     }
 
-    fun updateTask(task: Task) = viewModelScope.launch {
-        task.completed = !task.completed
-        taskDao.updateTask(task)
+    fun insertTask(task: Task) {
+        viewModelScope.launch(Dispatchers.IO) {
+            taskDao.insertTask(task)
+            this@TasksViewModel.tasks.value = taskDao.getAllTasks()
+        }
     }
 
-    fun deleteTask(task: Task) = viewModelScope.launch {
-        taskDao.deleteTask(task)
+    fun updateTask(task: Task) {
+        viewModelScope.launch(Dispatchers.IO) {
+            taskDao.updateTask(task)
+            this@TasksViewModel.tasks.value = taskDao.getAllTasks()
+        }
+    }
+
+    fun deleteTask(task: Task) {
+        viewModelScope.launch(Dispatchers.IO) {
+            taskDao.deleteTask(task)
+            this@TasksViewModel.tasks.value = taskDao.getAllTasks()
+        }
     }
 }
