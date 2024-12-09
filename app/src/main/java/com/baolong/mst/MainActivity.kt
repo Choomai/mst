@@ -160,6 +160,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
 @Composable
 fun TasksScreen(viewModel: TasksViewModel) {
     val tasks = viewModel.tasks
@@ -254,26 +255,6 @@ fun NoteItem(note: Note, onDelete: () -> Unit) {
                 ) { Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete") }
             }
         }
-    }
-}
-
-@Composable
-fun TimetableScreen() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("In development!.")
-    }
-}
-
-@Composable
-fun SettingsScreen() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("In development!.")
     }
 }
 
@@ -380,6 +361,17 @@ fun CreateBasicDialog(
     }
 }
 
+
+@Composable
+fun TimetableScreen() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("In development!.")
+    }
+}
+
 @Composable
 fun CreateTimetableDialog(state: MutableState<Boolean>) {
     var inputTitle by remember { mutableStateOf("") }
@@ -416,4 +408,15 @@ fun CreateTimetableDialog(state: MutableState<Boolean>) {
         },
         onDismissRequest = { resetInput() }
     )
+}
+
+
+@Composable
+fun SettingsScreen() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("In development!.")
+    }
 }
