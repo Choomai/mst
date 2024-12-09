@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
@@ -23,6 +24,8 @@ import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -93,7 +96,7 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
 
                 val openBasicDialog = remember { mutableStateOf(false) }
-//                val openTimetableDialog = remember { mutableStateOf(false) }
+                val openTimetableDialog = remember { mutableStateOf(false) }
 
                 val database = AppDatabase.getInstance(this)
                 val tasksViewModel = TasksViewModel(database)
@@ -103,7 +106,10 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     floatingActionButton = {
                         FloatingActionButton(
-                            onClick = { openBasicDialog.value = true }
+                            onClick = {
+                                openBasicDialog.value = true
+                                openTimetableDialog.value = true
+                            }
                         ) { Icon(imageVector = Icons.Default.Add, contentDescription = "Add action") }
                     },
                     bottomBar = {
@@ -142,15 +148,24 @@ class MainActivity : ComponentActivity() {
                     ) {
                         composable(navBarItems[0].route) {
                             TasksScreen(tasksViewModel)
-                            if (openBasicDialog.value) { CreateBasicDialog(navBarItems[0].route, tasksViewModel = tasksViewModel, notesViewModel = null, state = openBasicDialog) }
+                            if (openBasicDialog.value) {
+                                openTimetableDialog.value = false
+                                CreateBasicDialog(navBarItems[0].route, tasksViewModel = tasksViewModel, notesViewModel = null, state = openBasicDialog)
+                            }
                         }
                         composable(navBarItems[1].route) {
                             NotesScreen(notesViewModel)
-                            if (openBasicDialog.value) { CreateBasicDialog(navBarItems[1].route, tasksViewModel = null, notesViewModel = notesViewModel, state = openBasicDialog) }
+                            if (openBasicDialog.value) {
+                                openTimetableDialog.value = false
+                                CreateBasicDialog(navBarItems[1].route, tasksViewModel = null, notesViewModel = notesViewModel, state = openBasicDialog)
+                            }
                         }
                         composable(navBarItems[2].route) {
                             TimetableScreen()
-//                            if (openTimetableDialog.value) { CreateTimetableDialog(state = openTimetableDialog) }
+                            if (openTimetableDialog.value) {
+                                openBasicDialog.value = false
+                                CreateTimetableDialog(state = openTimetableDialog)
+                            }
                         }
                         composable(navBarItems[3].route) { SettingsScreen() }
                     }
@@ -374,23 +389,45 @@ fun TimetableScreen() {
 
 @Composable
 fun CreateTimetableDialog(state: MutableState<Boolean>) {
-    var inputTitle by remember { mutableStateOf("") }
-    var inputTitleValid by remember { mutableStateOf(false) }
-    var inputContent by remember { mutableStateOf("") }
-    var inputContentValid by remember { mutableStateOf(false) }
+    val weekDays = listOf("Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật")
+    var expandedWeekDays by remember { mutableStateOf(false) }
+    var selectedWeekday by remember { mutableStateOf(weekDays[0]) }
 
     fun resetInput() {
-        inputTitle = ""
-        inputTitleValid = false
-        inputContent = ""
-        inputContentValid = false
+        selectedWeekday = weekDays[0]
     }
 
     AlertDialog(
         title = { Text("Thêm lịch trình") },
         text = {
             Column {
-                // TODO: Add time and weekday input
+                Box {
+                    OutlinedTextField(
+                        value = selectedWeekday,
+                        onValueChange = { selectedWeekday = it },
+                        readOnly = true,
+                        trailingIcon = {
+                            IconButton(onClick = { expandedWeekDays = !expandedWeekDays }) {
+                                Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = null)
+                            }
+                        }
+                    )
+                    DropdownMenu(
+                        expanded = expandedWeekDays,
+                        onDismissRequest = { expandedWeekDays = false }
+                    ) {
+                        weekDays.forEach { weekDay ->
+                            DropdownMenuItem(
+                                text = { Text(text = weekDay) },
+                                onClick = {
+                                    selectedWeekday = weekDay
+                                    expandedWeekDays = false
+                                    resetInput()
+                                }
+                            )
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
