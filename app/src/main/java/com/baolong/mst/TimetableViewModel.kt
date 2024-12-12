@@ -31,7 +31,12 @@ class TimetableViewModel(mainContext: Context, database: AppDatabase, mainAlarmM
         val intent = Intent(context, NotificationReceiver::class.java)
         intent.putExtra("event_content", event.content)
 
-        val pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
         val calendar = Calendar.getInstance()
         val weekday = when (event.weekday) {
             "Thứ 2" -> 2
