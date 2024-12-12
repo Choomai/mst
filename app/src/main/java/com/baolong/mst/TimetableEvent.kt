@@ -8,6 +8,6 @@ import java.time.LocalTime
 data class TimetableEvent(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val content: String,
-    val weekday: Int,
+    val weekday: String,
     val time: LocalTime
 )

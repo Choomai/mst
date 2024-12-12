@@ -1,5 +1,7 @@
 package com.baolong.mst
 
+import android.app.AlarmManager
+import android.content.Context
 import android.icu.util.Calendar
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -50,6 +52,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
@@ -104,9 +107,10 @@ class MainActivity : ComponentActivity() {
                 val openTimetableDialog = remember { mutableStateOf(false) }
 
                 val database = AppDatabase.getInstance(this)
+                val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
                 val tasksViewModel = TasksViewModel(database)
                 val notesViewModel = NotesViewModel(database)
-                val timetableViewModel = TimetableViewModel(database)
+                val timetableViewModel = TimetableViewModel(LocalContext.current, database, alarmManager)
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
@@ -432,12 +436,10 @@ fun CreateTimetableDialog(state: MutableState<Boolean>) {
     val timePickerState = rememberTimePickerState(
         initialHour = currentTime.get(Calendar.HOUR_OF_DAY),
         initialMinute = currentTime.get(Calendar.MINUTE),
-        is24Hour = true
+        is24Hour = false
     )
 
-    fun resetInput() {
-        selectedWeekday = weekDays[0]
-    }
+    fun resetInput() { selectedWeekday = weekDays[0] }
 
     AlertDialog(
         title = { Text("Thêm lịch trình") },
