@@ -16,21 +16,21 @@ class TimetableViewModel(database: AppDatabase): ViewModel() {
         }
     }
 
-    fun insertTask(event: TimetableEvent) {
+    fun insertEvent(event: TimetableEvent) {
         viewModelScope.launch(Dispatchers.IO) {
             timetableDao.insertEvent(event)
             this@TimetableViewModel.events.value = timetableDao.getAllEvents()
         }
     }
 
-    fun updateTask(event: TimetableEvent) {
+    fun updateEvent(event: TimetableEvent) {
         viewModelScope.launch(Dispatchers.IO) {
             timetableDao.updateEvent(event)
             this@TimetableViewModel.events.value = timetableDao.getAllEvents()
         }
     }
 
-    fun deleteTask(event: TimetableEvent) {
+    fun deleteEvent(event: TimetableEvent) {
         viewModelScope.launch(Dispatchers.IO) {
             timetableDao.deleteEvent(event)
             this@TimetableViewModel.events.value = timetableDao.getAllEvents()

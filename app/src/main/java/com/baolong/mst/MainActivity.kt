@@ -1,9 +1,9 @@
 package com.baolong.mst
 
+import android.icu.util.Calendar
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -37,6 +36,8 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TimeInput
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -48,16 +49,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.unit.toSize
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -109,6 +106,7 @@ class MainActivity : ComponentActivity() {
                 val database = AppDatabase.getInstance(this)
                 val tasksViewModel = TasksViewModel(database)
                 val notesViewModel = NotesViewModel(database)
+                val timetableViewModel = TimetableViewModel(database)
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
@@ -169,7 +167,7 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                         composable(navBarItems[2].route) {
-                            TimetableScreen()
+                            TimetableScreen(timetableViewModel)
                             if (openTimetableDialog.value) {
                                 openBasicDialog.value = false
                                 CreateTimetableDialog(state = openTimetableDialog)
@@ -386,20 +384,56 @@ fun CreateBasicDialog(
 
 
 @Composable
-fun TimetableScreen() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("In development!.")
+fun TimetableScreen(viewModel: TimetableViewModel) {
+    val events = viewModel.events
+    LazyColumn {
+        items(events.value) { event ->
+            TimetableItem(event) { viewModel.deleteEvent(event) }
+        }
     }
 }
 
+@Composable
+fun TimetableItem(event: TimetableEvent, onDelete: () -> Unit) {
+    Card(modifier = Modifier
+        .fillMaxWidth()
+        .padding(8.dp)) {
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp, 4.dp)
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                val time = event.time.toString()
+                Text(
+                    text = "$time ${event.weekday}",
+                    fontSize = 20.sp,
+                )
+                Text(text = event.content)
+            }
+            Row(modifier = Modifier.align(Alignment.CenterVertically)) {
+                IconButton(
+                    onClick = onDelete
+                ) { Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete") }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateTimetableDialog(state: MutableState<Boolean>) {
     val weekDays = listOf("Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật")
     var expandedWeekDays by remember { mutableStateOf(false) }
     var selectedWeekday by remember { mutableStateOf(weekDays[0]) }
+
+    val currentTime = Calendar.getInstance()
+    val timePickerState = rememberTimePickerState(
+        initialHour = currentTime.get(Calendar.HOUR_OF_DAY),
+        initialMinute = currentTime.get(Calendar.MINUTE),
+        is24Hour = true
+    )
 
     fun resetInput() {
         selectedWeekday = weekDays[0]
@@ -440,6 +474,7 @@ fun CreateTimetableDialog(state: MutableState<Boolean>) {
                         }
                     }
                 }
+                TimeInput(state = timePickerState)
             }
         },
         confirmButton = {
