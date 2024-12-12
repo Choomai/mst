@@ -62,6 +62,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.baolong.mst.ui.theme.MSTTheme
+import java.time.LocalTime
 
 
 class MainActivity : ComponentActivity() {
@@ -174,7 +175,7 @@ class MainActivity : ComponentActivity() {
                             TimetableScreen(timetableViewModel)
                             if (openTimetableDialog.value) {
                                 openBasicDialog.value = false
-                                CreateTimetableDialog(state = openTimetableDialog)
+                                CreateTimetableDialog(openTimetableDialog, timetableViewModel)
                             }
                         }
                         composable(navBarItems[3].route) { SettingsScreen() }
@@ -427,7 +428,7 @@ fun TimetableItem(event: TimetableEvent, onDelete: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateTimetableDialog(state: MutableState<Boolean>) {
+fun CreateTimetableDialog(state: MutableState<Boolean>, timetableViewModel: TimetableViewModel) {
     val weekDays = listOf("Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật")
     var expandedWeekDays by remember { mutableStateOf(false) }
     var selectedWeekday by remember { mutableStateOf(weekDays[0]) }
@@ -438,6 +439,8 @@ fun CreateTimetableDialog(state: MutableState<Boolean>) {
         initialMinute = currentTime.get(Calendar.MINUTE),
         is24Hour = false
     )
+    var inputContent by remember { mutableStateOf("") }
+    var inputContentValid by remember { mutableStateOf(false) }
 
     fun resetInput() { selectedWeekday = weekDays[0] }
 
@@ -477,14 +480,29 @@ fun CreateTimetableDialog(state: MutableState<Boolean>) {
                     }
                 }
                 TimeInput(state = timePickerState)
+                OutlinedTextField(
+                    value = inputContent,
+                    onValueChange = {
+                        inputContent = it
+                        inputContentValid = it.isNotEmpty()
+                    },
+                    label = { Text(text = "Nội dung") }
+                )
             }
         },
         confirmButton = {
-            Button(onClick = {
-                // TODO: handle and register with AlarmManager
-                resetInput()
-                state.value = false
-            }) { Text("Thêm vào") }
+            Button(
+                onClick = {
+                    timetableViewModel.insertEvent(TimetableEvent(
+                        content = inputContent,
+                        weekday = selectedWeekday,
+                        time = LocalTime.of(timePickerState.hour, timePickerState.minute)
+                    ))
+                    resetInput()
+                    state.value = false
+                },
+                enabled = inputContentValid
+            ) { Text("Thêm vào") }
         },
         dismissButton = {
             Button(onClick = {

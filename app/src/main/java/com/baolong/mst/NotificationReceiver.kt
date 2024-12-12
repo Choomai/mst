@@ -16,11 +16,10 @@ class NotificationReceiver : BroadcastReceiver() {
         val channel = NotificationChannel(channelId, channelName, importance)
         channel.description = "Notify user based on their timetable"
         notificationManager.createNotificationChannel(channel)
-
         val notificationBuilder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.baseline_alarm_24)
-            .setContentTitle("Your Weekly Reminder")
-            .setContentText("It's time for your weekly task!")
+            .setContentTitle("Thời gian biểu")
+            .setContentText(intent.getStringExtra("event_content"))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
         notificationManager.notify(0, notificationBuilder.build())
