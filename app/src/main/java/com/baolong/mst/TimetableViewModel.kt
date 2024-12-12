@@ -47,7 +47,13 @@ class TimetableViewModel(mainContext: Context, database: AppDatabase, mainAlarmM
         calendar.set(Calendar.HOUR_OF_DAY, event.time.hour)
         calendar.set(Calendar.MINUTE, event.time.minute)
 
-        alarmManager?.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+//        alarmManager?.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+        alarmManager?.setRepeating(
+            AlarmManager.RTC_WAKEUP,
+            calendar.timeInMillis,
+            AlarmManager.INTERVAL_DAY * 7,
+            pendingIntent
+        )
         event.pendingIntent = pendingIntent
     }
 
