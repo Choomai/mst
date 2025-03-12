@@ -14,7 +14,7 @@ android {
         applicationId = "com.baolong.mst"
         minSdk = 26
         versionCode = 1
-        versionName = "0.2.3"
+        versionName = "0.2.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         targetSdk = 34
