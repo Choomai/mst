@@ -1,11 +1,18 @@
 package com.baolong.mst
 
+import android.Manifest
+import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import android.icu.util.Calendar
+import androidx.core.content.edit
 
 class NotificationReceiver : BroadcastReceiver() {
     private val channelId = "timetable"
@@ -23,7 +30,7 @@ class NotificationReceiver : BroadcastReceiver() {
             notificationManager.createNotificationChannel(channel)
 
             // Set the flag to indicate that the channel has been created
-            sharedPreferences.edit().putBoolean(settingsKey, true).apply()
+            sharedPreferences.edit { putBoolean(settingsKey, true) }
         }
     }
 
@@ -38,5 +45,37 @@ class NotificationReceiver : BroadcastReceiver() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
         notificationManager.notify((0..1000).random(), notificationBuilder.build())
+
+        // Reschedule for next week
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val calendar = Calendar.getInstance()
+
+        calendar.add(Calendar.DAY_OF_MONTH, 7)
+        calendar.set(Calendar.HOUR_OF_DAY, intent.getStringExtra("event_time")?.split(":")?.get(0)?.toInt() ?: 0)
+        calendar.set(Calendar.MINUTE, intent.getStringExtra("event_time")?.split(":")?.get(1)?.toInt() ?: 0)
+        calendar.set(Calendar.SECOND, 0)
+
+        val newIntent = Intent(context, NotificationReceiver::class.java).apply {
+            putExtra("event_content", intent.getStringExtra("event_content"))
+            putExtra("event_id", intent.getIntExtra("event_id", 0))
+            putExtra("event_time", intent.getStringExtra("event_time"))
+            putExtra("event_weekday", intent.getStringExtra("event_weekday"))
+        }
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            intent.getIntExtra("event_id", 0),
+            newIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.SCHEDULE_EXACT_ALARM)
+            == PackageManager.PERMISSION_GRANTED) {
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                calendar.timeInMillis,
+                pendingIntent
+            )
+        }
     }
 }
