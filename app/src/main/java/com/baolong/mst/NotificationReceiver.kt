@@ -12,6 +12,9 @@ import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import android.icu.util.Calendar
+import android.media.AudioAttributes
+import android.media.AudioManager
+import android.media.RingtoneManager
 import androidx.core.content.edit
 
 class NotificationReceiver : BroadcastReceiver() {
@@ -25,10 +28,18 @@ class NotificationReceiver : BroadcastReceiver() {
         val channelCreated = sharedPreferences.getBoolean(settingsKey, false)
 
         if (!channelCreated) {
-            val channel = NotificationChannel(channelId, channelName, importance)
-            channel.description = "Notify user based on their timetable"
-            notificationManager.createNotificationChannel(channel)
+            val channel = NotificationChannel(channelId, channelName, importance).apply {
+                description = "Notify user based on their timetable"
+                setSound(
+                    RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM),
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build()
+                )
+            }
 
+            notificationManager.createNotificationChannel(channel)
             // Set the flag to indicate that the channel has been created
             sharedPreferences.edit { putBoolean(settingsKey, true) }
         }
@@ -36,6 +47,7 @@ class NotificationReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         createNotificationChannel(context, notificationManager)
 
         val notificationBuilder = NotificationCompat.Builder(context, channelId)
@@ -44,7 +56,12 @@ class NotificationReceiver : BroadcastReceiver() {
             .setContentText(intent.getStringExtra("event_content"))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
-        notificationManager.notify((0..1000).random(), notificationBuilder.build())
+
+        if (audioManager.ringerMode == AudioManager.RINGER_MODE_NORMAL) {
+            notificationBuilder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM))
+        }
+
+        notificationManager.notify(intent.getIntExtra("event_id", 0), notificationBuilder.build())
 
         // Reschedule for next week
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
